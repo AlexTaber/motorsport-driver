@@ -73,7 +73,7 @@ export class GameScene extends Phaser.Scene {
       n.update()
 
       if (n.pastMaxLife) {
-        this.playerCar.incPace(-0.08);
+        this.playerCar.mistake();
         n.markForDestruction();
       };
 
@@ -97,10 +97,10 @@ export class GameScene extends Phaser.Scene {
     const node = this.nodes.find(n => n.type === type);
 
     if (node) {
-      this.playerCar.incPace(0.02 * node.percentRelativeToTarget);
+      this.playerCar.incPace(0.02 * node.getPercentRelativeToTargetWithModifier(2));
       node.markForDestruction();
     } else {
-      this.playerCar.incPace(-0.02);
+      this.playerCar.mistake();
     }
   }
 }
