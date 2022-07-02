@@ -14,7 +14,7 @@ export const useGameFactory = () => {
     return game;
   }
 
-  const getScene = () => game?.scene.getScene("GameScene") as Phaser.Scene;
+  const getScene = () => game?.scene.getScene("GameScene") as GameScene;
 
   return {
     game: game as Phaser.Game,

@@ -5,11 +5,14 @@ export const useCanvas = () => {
 
   const getPercentageHeight = (percentage: number) => config.scale.height * (percentage / 100);
 
+  const getPercentageWidth = (percentage: number) => config.scale.width * (percentage / 100);
+
   const size = { width: config.scale.width, height: config.scale.height };
 
   return {
     size,
     getCenter,
     getPercentageHeight,
+    getPercentageWidth,
   };
 }

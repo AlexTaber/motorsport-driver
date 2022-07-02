@@ -1,8 +1,8 @@
-import { InputNode } from "./input-node.model"
+import { InputNode, InputNodeType } from "./input-node.model"
 
 export function useInputNodesFactory() {
-  const create = (position: Phaser.Math.Vector2) => {
-    return new InputNode(position);
+  const create = (type: InputNodeType) => {
+    return new InputNode(type);
   }
 
   return {

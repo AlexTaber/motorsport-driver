@@ -8,6 +8,6 @@ export class Car {
   private delta = useDeltatime();
 
   public update() {
-    this.trackDistance += this.distance.kphToPixelsPerSecond(150) * this.delta.elapsed.value;
+    this.trackDistance += this.distance.kphToPixelsPerSecond(180) * this.delta.elapsed.value;
   }
 }
