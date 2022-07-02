@@ -4,9 +4,9 @@ module.exports = {
     node: true
   },
   'extends': [
-    'plugin:vue/vue3-essential',
+    'plugin:vue/vue3-recommended',
     'eslint:recommended',
-    '@vue/typescript/recommended'
+    '@vue/typescript'
   ],
   parserOptions: {
     ecmaVersion: 2020
@@ -16,6 +16,7 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'vue/no-deprecated-slot-attribute': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
+    'vue/multi-word-component-names': 'off',
   },
   overrides: [
     {
