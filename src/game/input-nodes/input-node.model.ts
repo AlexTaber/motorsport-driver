@@ -9,12 +9,28 @@ export class InputNode {
   public created = Date.now();
   public markedForDestruction = false;
 
-  private maxLife = 400;
+  public get pastMaxLife() {
+    return this.life > this.maxLife
+  }
+
+  public get percentRelativeToTarget() {
+    return 1 - (Math.abs(this.targetTime - this.life) / this.targetTime)
+  }
+
   private scene = useGameFactory().getScene();
   private canvas = useCanvas();
 
+  private get life() {
+    return Date.now() - this.created;
+  }
+
+  private get maxLife() {
+    return this.targetTime * 2;
+  }
+
   constructor(
     public type: InputNodeType,
+    public targetTime: number,
   ) {
     const position = this.getPosition();
     this.object = this.scene.physics.add.sprite(position.x, position.y, "inputNode");
@@ -22,13 +38,7 @@ export class InputNode {
   }
 
   public update() {
-    const life = Date.now() - this.created;
-    const halfMaxLife = this.maxLife * 0.5;
-    this.object.setScale(0.4 * (1 - (Math.abs(halfMaxLife - life) / halfMaxLife)));
-
-    if (life > this.maxLife) {
-      this.markedForDestruction = true;
-    }
+    this.object.setScale(0.4 * this.percentRelativeToTarget);
   }
 
   public markForDestruction() {

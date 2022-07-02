@@ -2,12 +2,10 @@ import Phaser from 'phaser';
 import { Car } from './cars/car.model';
 import { useGameInputs } from './game.inputs';
 import { InputNode, InputNodeType } from './input-nodes/input-node.model';
-import { useInputNodesFactory } from './input-nodes/input-nodes.factory';
 import { Track } from './tracks/track.model';
 import { useDeltatime } from './utils/deltatime.service';
 
 export class GameScene extends Phaser.Scene {
-  private inputNodesFactory = useInputNodesFactory();
   private delta = useDeltatime();
   private inputManager: any;
 
@@ -34,20 +32,20 @@ export class GameScene extends Phaser.Scene {
     this.inputManager.update();
     this.delta.update();
     this.updateCars();
-    this.updatePlayerInputs();
+    this.updateNodes();
     this.cleanInputs();
   }
 
   public onBrake() {
-    this.removeNodeByType("brake");
+    this.onKeyPress("brake");
   }
 
   public onThrottle() {
-    this.removeNodeByType("throttle");
+    this.onKeyPress("throttle");
   }
 
   public onSteer() {
-    this.removeNodeByType("steer");
+    this.onKeyPress("steer");
   }
 
   private updateCars() {
@@ -61,16 +59,27 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private updatePlayerInputs() {
+  private updateNodes() {
     const currentNode = this.track.nodes[this.track.nodeIndex];
+
     if (currentNode && currentNode.distance < this.playerCar.trackDistance) {
-      this.nodes.push(this.inputNodesFactory.create(currentNode.type));
+      const targetTime = 100 + (1000 * (1 - Math.max(this.playerCar.pace, 0.6)));
+
+      this.nodes.push(new InputNode(currentNode.type, targetTime));
       this.track.nodeIndex ++;
     }
 
     this.nodes.forEach(n => {
       n.update()
-      if (n.markedForDestruction) this.nodesMarkedForDestruction.push(n);
+
+      if (n.pastMaxLife) {
+        this.playerCar.incPace(-0.08);
+        n.markForDestruction();
+      };
+
+      if (n.markedForDestruction) {
+        this.nodesMarkedForDestruction.push(n);
+      }
     });
   }
 
@@ -84,11 +93,14 @@ export class GameScene extends Phaser.Scene {
     this.nodesMarkedForDestruction = [];
   }
 
-  private removeNodeByType(type: InputNodeType) {
+  private onKeyPress(type: InputNodeType) {
     const node = this.nodes.find(n => n.type === type);
 
     if (node) {
+      this.playerCar.incPace(0.02 * node.percentRelativeToTarget);
       node.markForDestruction();
+    } else {
+      this.playerCar.incPace(-0.02);
     }
   }
 }
