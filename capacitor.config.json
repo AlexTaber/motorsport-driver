@@ -1,0 +1,6 @@
+{
+	"appId": "io.ionic.starter",
+	"appName": "driver-game",
+	"webDir": "dist",
+	"bundledWebRuntime": false
+}
