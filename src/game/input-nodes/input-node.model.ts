@@ -14,7 +14,7 @@ export class InputNode {
   }
 
   public get percentRelativeToTarget() {
-    return Math.abs(this.targetTime - this.life) / this.targetTime;
+    return 1 - (Math.abs(this.targetTime - this.life) / this.targetTime)
   }
 
   private scene = useGameFactory().getScene();
@@ -50,7 +50,7 @@ export class InputNode {
   }
 
   public getPercentRelativeToTargetWithModifier(modifier: number) {
-    return -(modifier * 0.5) + (modifier - (this.percentRelativeToTarget * modifier));
+    return -(modifier * 0.5) + (this.percentRelativeToTarget * modifier);
   }
 
   private getPosition() {

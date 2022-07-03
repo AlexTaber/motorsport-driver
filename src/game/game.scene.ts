@@ -6,13 +6,14 @@ import { Track } from './tracks/track.model';
 import { useDeltatime } from './utils/deltatime.service';
 
 export class GameScene extends Phaser.Scene {
+  public track!: Track;
+  public cars!: Car[];
+  public playerCar!: Car;
+  public nodes = [] as InputNode[];
+
   private delta = useDeltatime();
   private inputManager: any;
 
-  private track = new Track();
-  private cars = [new Car()];
-  private playerCar = this.cars[0];
-  private nodes = [] as InputNode[];
   private nodesMarkedForDestruction = [] as InputNode[];
 
   constructor() {
@@ -26,6 +27,10 @@ export class GameScene extends Phaser.Scene {
   public create() {
     this.inputManager = useGameInputs();
     this.delta.reset();
+
+    this.track = new Track();
+    this.cars = [new Car()];
+    this.playerCar = this.cars[0];
   }
 
   public update() {
@@ -49,14 +54,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateCars() {
-    this.cars.forEach((car) => {
-      car.update();
-
-      if (car.trackDistance > this.track.distance) {
-        car.trackDistance -= this.track.distance;
-        this.track.nodeIndex = 0;
-      }
-    });
+    this.cars.forEach((car) => car.update());
   }
 
   private updateNodes() {
@@ -75,7 +73,7 @@ export class GameScene extends Phaser.Scene {
       if (n.pastMaxLife) {
         this.playerCar.mistake();
         n.markForDestruction();
-      };
+      }
 
       if (n.markedForDestruction) {
         this.nodesMarkedForDestruction.push(n);
