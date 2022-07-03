@@ -1,9 +1,13 @@
 import Phaser from 'phaser';
+import { ref } from 'vue';
 import { Car } from './cars/car.model';
 import { useGameInputs } from './game.inputs';
 import { InputNode, InputNodeType } from './input-nodes/input-node.model';
 import { Track } from './tracks/track.model';
-import { useDeltatime } from './utils/deltatime.service';
+import { useDeltatime } from './services/deltatime.service';
+import { usePublicApi } from './services/public-api.service';
+
+export const scene = ref<GameScene | undefined>(undefined);
 
 export class GameScene extends Phaser.Scene {
   public track!: Track;
@@ -11,6 +15,7 @@ export class GameScene extends Phaser.Scene {
   public playerCar!: Car;
   public nodes = [] as InputNode[];
 
+  private publicApi = usePublicApi();
   private delta = useDeltatime();
   private inputManager: any;
 
@@ -25,6 +30,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   public create() {
+    scene.value = this;
     this.inputManager = useGameInputs();
     this.delta.reset();
 
@@ -39,6 +45,7 @@ export class GameScene extends Phaser.Scene {
     this.updateCars();
     this.updateNodes();
     this.cleanInputs();
+    this.publicApi.updateFromGame(this);
   }
 
   public onBrake() {
@@ -51,6 +58,14 @@ export class GameScene extends Phaser.Scene {
 
   public onSteer() {
     this.onKeyPress("steer");
+  }
+
+  public onIncreaseTargetPace() {
+    this.playerCar.targetPace = Math.min(1, this.playerCar.targetPace + 0.025);
+  }
+
+  public onDecreaseTargetPace() {
+    this.playerCar.targetPace = Math.max(0.6, this.playerCar.targetPace - 0.025);
   }
 
   private updateCars() {

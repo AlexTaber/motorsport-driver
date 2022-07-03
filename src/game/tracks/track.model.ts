@@ -1,5 +1,5 @@
 import { InputNodeType } from "../input-nodes/input-node.model";
-import { useDistance } from "../utils/distance.service";
+import { useDistance } from "../services/distance.service";
 
 interface InputNodeParams {
   type: InputNodeType;

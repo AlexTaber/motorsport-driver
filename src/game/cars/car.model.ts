@@ -1,12 +1,15 @@
+import { uuid } from "../../utils/uuid";
 import { useGameFactory } from "../game.factory";
-import { useDeltatime } from "../utils/deltatime.service";
-import { useDistance } from "../utils/distance.service";
+import { useDeltatime } from "../services/deltatime.service";
+import { useDistance } from "../services/distance.service";
+import { randomRange } from "../../utils/random";
 
 interface Lap {
   time: number;
 }
 
 export class Car {
+  public id = uuid();
   public trackDistance = 0;
   public pace = 0.7;
   public targetPace = 1;
@@ -43,7 +46,8 @@ export class Car {
   }
 
   public incPace(amt: number) {
-    this.pace = Math.max(Math.min(this.targetPace, this.pace + amt), 0.6);
+    const randomizedTargetPace = this.targetPace - randomRange(0, 0.05);
+    this.pace = Math.max(Math.min(randomizedTargetPace, this.pace + amt), 0.6);
   }
 
   private addLap() {
@@ -52,6 +56,5 @@ export class Car {
     const interpolatedTime = (1 - interpolatedTimeRatio) * this.delta.elapsed.value;
     this.laps.push({ time: now - this.lapStart + interpolatedTime });
     this.lapStart = Date.now() - (this.delta.elapsed.value * interpolatedTimeRatio);
-    console.log(this.laps);
   }
 }

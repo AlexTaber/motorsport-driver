@@ -1,5 +1,7 @@
 <template>
   <IonPage>
+    <Player v-if="scene" />
+
     <div id="game" />
   </IonPage>
 </template>
@@ -8,6 +10,8 @@
 import { IonPage } from '@ionic/vue';
 
 import { useGameFactory } from "./game.factory";
+import Player from './player/Player.vue';
+import { scene } from "./game.scene";
 
 const { createGame } = useGameFactory();
 
