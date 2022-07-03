@@ -1,7 +1,7 @@
 import { useCanvas } from "../canvas/canvas.service";
 import { useGameFactory } from "../game.factory";
 
-export type InputNodeType = "brake" | "throttle" | "gearUp" | "gearDown" | "steer";
+export type InputNodeType = "brake" | "throttle" | "gearUp" | "gearDown" | "steer" | "correction";
 
 export class InputNode {
   public id = Math.random();
@@ -35,6 +35,7 @@ export class InputNode {
     const position = this.getPosition();
     this.object = this.scene.physics.add.sprite(position.x, position.y, "inputNode");
     this.object.scale = 0;
+    this.object.setTint(this.getTint());
   }
 
   public update() {
@@ -54,14 +55,34 @@ export class InputNode {
   }
 
   private getPosition() {
-    const xPostionMap: Record<InputNodeType, number> = {
-      brake: this.canvas.getPercentageWidth(25),
-      throttle: this.canvas.getPercentageWidth(75),
-      steer: this.canvas.getPercentageWidth(50),
-      gearDown: this.canvas.getPercentageWidth(25),
-      gearUp: this.canvas.getPercentageWidth(75),
+    const positionMap: Record<InputNodeType, any> = {
+      brake: { x: this.canvas.getPercentageWidth(25) },
+      throttle: { x: this.canvas.getPercentageWidth(75) },
+      steer: {},
+      gearDown: { x: this.canvas.getPercentageWidth(25) },
+      gearUp: { x: this.canvas.getPercentageWidth(75) },
+      correction: { y: this.canvas.getPercentageHeight(25) },
     };
 
-    return new Phaser.Math.Vector2(xPostionMap[this.type], this.canvas.getCenter().y);
+    const position = {
+      x: this.canvas.getCenter().x,
+      y: this.canvas.getCenter().y,
+      ...positionMap[this.type],
+    };
+
+    return new Phaser.Math.Vector2(position.x, position.y);
+  }
+
+  private getTint() {
+    const tintMap: Record<InputNodeType, number> = {
+      brake: 0xff0000,
+      throttle: 0xff0000,
+      steer: 0xff0000,
+      gearDown: 0xff0000,
+      gearUp: 0xff0000,
+      correction: 0xff0000,
+    }
+
+    return tintMap[this.type];
   }
 }

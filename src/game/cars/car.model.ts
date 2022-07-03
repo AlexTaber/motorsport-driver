@@ -16,9 +16,10 @@ export class Car {
   public mistakes = 0;
   public lastMistake = 0;
   public laps = [] as Lap[];
+  public crashed = false;
 
   public get speed() {
-    return 180 * this.pace;
+    return this.crashed ? 0 : 180 * this.pace;
   }
 
   private distance = useDistance();
@@ -38,15 +39,13 @@ export class Car {
   }
 
   public mistake() {
-    if (Date.now() - this.lastMistake > 50) {
-      this.mistakes ++;
-      this.incPace(-0.1);
-      this.lastMistake = Date.now();
-    }
+    this.mistakes ++;
+    this.incPace(-0.1);
+    this.lastMistake = Date.now();
   }
 
   public incPace(amt: number) {
-    const randomizedTargetPace = this.targetPace - randomRange(0, 0.05);
+    const randomizedTargetPace = this.targetPace - randomRange(0, 0.02);
     this.pace = Math.max(Math.min(randomizedTargetPace, this.pace + amt), 0.6);
   }
 

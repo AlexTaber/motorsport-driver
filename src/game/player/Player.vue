@@ -11,6 +11,10 @@
     <h4>
       Target Pace: {{ playerCar?.targetPace }}
     </h4>
+
+    <h1 v-if="playerCar?.crashed">
+      CRASHED
+    </h1>
   </div>
 </template>
 

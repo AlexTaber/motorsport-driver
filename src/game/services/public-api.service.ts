@@ -7,6 +7,7 @@ export interface PublicCar {
   pace: number;
   targetPace: number;
   mistakes: number;
+  crashed: boolean;
   lastLap?: number;
   fastestLap?: number;
 }
@@ -25,11 +26,12 @@ export const usePublicApi = () => {
     });
   };
 
-  const getPublicCarsFromGame = (game: GameScene) => {
+  const getPublicCarsFromGame = (game: GameScene): PublicCar[] => {
     return game.cars.map((c) => ({
       id: c.id,
       pace: c.pace,
       mistakes: c.mistakes,
+      crashed: c.crashed,
       lastLap: arrayLast(c.laps)?.time,
       fastestLap: [ ...c.laps ].sort((l1, l2) => l1.time > l2.time ? 1 : -1)[0]?.time,
       targetPace: c.targetPace,

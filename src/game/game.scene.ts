@@ -6,6 +6,7 @@ import { InputNode, InputNodeType } from './input-nodes/input-node.model';
 import { Track } from './tracks/track.model';
 import { useDeltatime } from './services/deltatime.service';
 import { usePublicApi } from './services/public-api.service';
+import { randomRange } from '../utils/random';
 
 export const scene = ref<GameScene | undefined>(undefined);
 
@@ -60,6 +61,10 @@ export class GameScene extends Phaser.Scene {
     this.onKeyPress("steer");
   }
 
+  public onCorrection() {
+    this.onKeyPress("correction");
+  }
+
   public onIncreaseTargetPace() {
     this.playerCar.targetPace = Math.min(1, this.playerCar.targetPace + 0.025);
   }
@@ -86,7 +91,12 @@ export class GameScene extends Phaser.Scene {
       n.update()
 
       if (n.pastMaxLife) {
-        this.playerCar.mistake();
+        if (n.type === "correction") {
+          this.onPlayerCrash();
+        } else {
+          this.onPlayerMistake();
+        }
+
         n.markForDestruction();
       }
 
@@ -110,10 +120,27 @@ export class GameScene extends Phaser.Scene {
     const node = this.nodes.find(n => n.type === type);
 
     if (node) {
-      this.playerCar.incPace(0.02 * node.getPercentRelativeToTargetWithModifier(2));
+      if (node.type !== "correction") {
+        this.playerCar.incPace(0.02 * node.getPercentRelativeToTargetWithModifier(2));
+      }
       node.markForDestruction();
     } else {
-      this.playerCar.mistake();
+      if (type !== "correction") {
+        this.onPlayerMistake();
+      }
     }
+  }
+
+  private onPlayerMistake() {
+    if (!this.nodes.find(n => n.type === "correction")) {
+      this.playerCar.mistake();
+
+      const targetTime = randomRange(200, 600);
+      this.nodes.push(new InputNode("correction", targetTime));
+    }
+  }
+
+  private onPlayerCrash() {
+    this.playerCar.crashed = true;
   }
 }
