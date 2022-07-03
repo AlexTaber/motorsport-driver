@@ -12,7 +12,7 @@ export class Car {
   public id = uuid();
   public trackDistance = 0;
   public pace = 0.7;
-  public targetPace = 1;
+  public targetPace = 0.7;
   public mistakes = 0;
   public lastMistake = 0;
   public laps = [] as Lap[];
