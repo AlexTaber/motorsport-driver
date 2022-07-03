@@ -38,6 +38,8 @@ export class GameScene extends Phaser.Scene {
     this.track = new Track();
     this.cars = [new Car()];
     this.playerCar = this.cars[0];
+
+    this.track.setSprite(this);
   }
 
   public update() {

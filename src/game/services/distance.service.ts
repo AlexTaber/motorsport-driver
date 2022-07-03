@@ -1,5 +1,5 @@
 export function useDistance() {
-  const meter = 3;
+  const meter = 0.1;
   const kilometer = meter * 1000;
 
   const kphToPixelsPerSecond = (kph: number) => {

@@ -39,6 +39,7 @@ export class InputNode {
   }
 
   public update() {
+    this.setPosition(this.object.body.position.x, this.object.body.position.y - 2);
     this.object.setScale(Math.max(0, 0.5 * this.percentRelativeToTarget));
   }
 
@@ -52,6 +53,13 @@ export class InputNode {
 
   public getPercentRelativeToTargetWithModifier(modifier: number) {
     return -(modifier * 0.5) + (this.percentRelativeToTarget * modifier);
+  }
+
+  public setPosition(x: number, y: number) {
+    this.object.setPosition(
+      x + this.object.body.width / 2,
+      y + this.object.body.height / 2
+    );
   }
 
   private getPosition() {
