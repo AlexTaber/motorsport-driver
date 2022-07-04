@@ -30,7 +30,7 @@ export function useTrackSpriteGenerator(track: Track, scene: GameScene) {
     track.segments.forEach(s => drawSegment(graphics, s));
     
     graphics.generateTexture("Track", textureW, textureH);
-    const sprite = scene.add.sprite(track.x, track.y, "Track");
+    const sprite = scene.add.sprite(0, track.y, "Track");
     sprite.setDisplayOrigin(textureX, textureY);
     return sprite;
   }
@@ -58,8 +58,9 @@ export function useTrackSpriteGenerator(track: Track, scene: GameScene) {
       x,
       y,
       segment.params.radius!,
-      Phaser.Math.DegToRad(segment.direction - 90),
-      Phaser.Math.DegToRad(segment.endPosition.direction - 90)
+      Phaser.Math.DegToRad(segment.direction - 270),
+      Phaser.Math.DegToRad(segment.direction - 270 - segment.params.arc!),
+      segment.params.arc! > 0
     );
 	}
 
