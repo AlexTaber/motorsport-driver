@@ -26,20 +26,20 @@ export class Track {
   private segmentData = [
     {
 			name: "S1",
-			length: 400
+			length: 200
 		},
 		{
 			name: "T1",
-			radius: 120,
+			radius: 80,
 			arc: 180,
 		},
 		{
 			name: "S2",
-			length: 400,
+			length: 200,
 		},
     {
 			name: "T2",
-			radius: 120,
+			radius: 80,
 			arc: 180,
 		},
   ] as TrackSegmentParams[];
@@ -67,11 +67,11 @@ export class Track {
       const segment = new TrackSegment(
         data,
         new Phaser.Math.Vector2({ x: position.x, y: position.y }),
-        this.direction,
+        position.direction,
         this
       );
       this.segments.push(segment);
-      position = segment.endPosition;
+      position = { ...segment.endPosition, direction: segment.endPosition.direction };
       this.distance += segment.distance;
     });
   }

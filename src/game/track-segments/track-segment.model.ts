@@ -37,8 +37,17 @@ export class TrackSegment {
     this.drawPosition = new Phaser.Math.Vector2(this.position);
 
     if (this.isCorner) {
+      this.drawPosition = new Phaser.Math.Vector2(getPoint(
+        this.position,
+        this.direction + this.directionOffset,
+        this.params.radius! * this.distanceService.meter
+      ));
       this.endPosition = {
-        ...getPoint(this.position, this.direction + this.directionOffset, this.params.radius! * this.distanceService.meter),
+        ...getPoint(
+          this.drawPosition,
+          this.direction - this.directionOffset + this.params.arc!,
+          this.params.radius! * this.distanceService.meter
+        ),
         direction: this.direction + this.params.arc!,
       };
     } else {

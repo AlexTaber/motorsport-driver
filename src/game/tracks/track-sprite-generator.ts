@@ -12,15 +12,23 @@ export function useTrackSpriteGenerator(track: Track, scene: GameScene) {
   const textureY = textureH - (distanceService.meter * 5);
 
   const generate = () => {
+    // const graphics = scene.make.graphics({x: track.x, y: track.y, add: false});
+    // graphics.lineStyle(distanceService.meter * 2, 0xff00ff, 1);
+    // graphics.beginPath();
+    // graphics.lineBetween(0, 0, 180, 0);
+    // graphics.closePath();
+    // graphics.strokePath();
+    // graphics.generateTexture("Track", 200, 200);
+    // const sprite = scene.add.image(track.x, track.y, "Track");
+    // sprite.setOrigin(0.1, 0.1);
+    // return sprite;
+
     const graphics = scene.make.graphics({x: track.x, y: track.y, add: false});
     graphics.lineStyle(distanceService.meter * 2, 0xff00ff, 1);
     graphics.beginPath();
 
-    // track.segments.forEach(s => drawSegment(graphics, s));
-    graphics.arc(textureX, textureY, 100, 0, 180);
+    track.segments.forEach(s => drawSegment(graphics, s));
     
-    graphics.closePath();
-    graphics.strokePath();
     graphics.generateTexture("Track", textureW, textureH);
     const sprite = scene.add.sprite(track.x, track.y, "Track");
     sprite.setDisplayOrigin(textureX, textureY);
@@ -28,9 +36,10 @@ export function useTrackSpriteGenerator(track: Track, scene: GameScene) {
   }
 
   function drawSegment(graphics: Phaser.GameObjects.Graphics, segment: TrackSegment) {
+    graphics.beginPath();
+
     if (segment.isCorner) {
-      // graphics.lineTo(segment.endPosition.x, segment.endPosition.y);
-      // graphics.moveTo(segment.endPosition.x, segment.endPosition.y);
+      drawCorner(graphics, segment);
     } else {
       const startX = segment.position.x + textureX - track.x;
 			const startY = segment.position.y + textureY - track.y;
@@ -38,7 +47,21 @@ export function useTrackSpriteGenerator(track: Track, scene: GameScene) {
 			const endY = segment.endPosition.y + textureY - track.y;
 			graphics.lineBetween(startX, startY, endX, endY);
     }
+
+    graphics.strokePath();
   }
+
+  function drawCorner(graphics: Phaser.GameObjects.Graphics, segment: TrackSegment) {
+		const x = segment.drawPosition.x + textureX - track.x;
+		const y = segment.drawPosition.y + textureY - track.y;
+    graphics.arc(
+      x,
+      y,
+      segment.params.radius!,
+      Phaser.Math.DegToRad(segment.direction - 90),
+      Phaser.Math.DegToRad(segment.endPosition.direction - 90)
+    );
+	}
 
   return {
     generate,
