@@ -12,25 +12,14 @@ export function useTrackSpriteGenerator(track: Track, scene: GameScene) {
   const textureY = textureH - (distanceService.meter * 5);
 
   const generate = () => {
-    // const graphics = scene.make.graphics({x: track.x, y: track.y, add: false});
-    // graphics.lineStyle(distanceService.meter * 2, 0xff00ff, 1);
-    // graphics.beginPath();
-    // graphics.lineBetween(0, 0, 180, 0);
-    // graphics.closePath();
-    // graphics.strokePath();
-    // graphics.generateTexture("Track", 200, 200);
-    // const sprite = scene.add.image(track.x, track.y, "Track");
-    // sprite.setOrigin(0.1, 0.1);
-    // return sprite;
-
     const graphics = scene.make.graphics({x: track.x, y: track.y, add: false});
     graphics.lineStyle(distanceService.meter * 2, 0xff00ff, 1);
     graphics.beginPath();
 
     track.segments.forEach(s => drawSegment(graphics, s));
-    
+
     graphics.generateTexture("Track", textureW, textureH);
-    const sprite = scene.add.sprite(0, track.y, "Track");
+    const sprite = scene.add.sprite(track.x, track.y, "Track");
     sprite.setDisplayOrigin(textureX, textureY);
     return sprite;
   }
@@ -52,17 +41,41 @@ export function useTrackSpriteGenerator(track: Track, scene: GameScene) {
   }
 
   function drawCorner(graphics: Phaser.GameObjects.Graphics, segment: TrackSegment) {
-		const x = segment.drawPosition.x + textureX - track.x;
-		const y = segment.drawPosition.y + textureY - track.y;
+		segment.params.arc! > 0 ? drawCounterClockwiseCorner(graphics, segment) : drawClockwiseCorner(graphics, segment);
+	}
+
+  function drawCounterClockwiseCorner(graphics: Phaser.GameObjects.Graphics, segment: TrackSegment) {
+    const {x, y} = getCornerDrawPosition(segment);
+    const startAngle = 360 - segment.direction + 90;
     graphics.arc(
       x,
       y,
       segment.params.radius!,
-      Phaser.Math.DegToRad(segment.direction - 270),
-      Phaser.Math.DegToRad(segment.direction - 270 - segment.params.arc!),
+      Phaser.Math.DegToRad(startAngle),
+      Phaser.Math.DegToRad(startAngle - segment.params.arc!),
       segment.params.arc! > 0
     );
-	}
+  }
+
+  function drawClockwiseCorner(graphics: Phaser.GameObjects.Graphics, segment: TrackSegment) {
+    const {x, y} = getCornerDrawPosition(segment);
+    const startAngle = 360 - segment.direction - 90;
+    graphics.arc(
+      x,
+      y,
+      segment.params.radius!,
+      Phaser.Math.DegToRad(startAngle),
+      Phaser.Math.DegToRad(startAngle - segment.params.arc!),
+      segment.params.arc! > 0
+    );
+  }
+
+  function getCornerDrawPosition(segment: TrackSegment) {
+    return {
+      x: segment.drawPosition.x + textureX - track.x,
+      y: segment.drawPosition.y + textureY - track.y,
+    };
+  }
 
   return {
     generate,
