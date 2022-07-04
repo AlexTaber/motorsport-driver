@@ -7,13 +7,14 @@ export interface TrackSegmentParams {
   length: number;
   arc?: number;
   radius?: number;
+  finish?: boolean;
 }
 
 export class TrackSegment {
   public get isCorner() {
     return !!this.params.arc;
   }
-  
+
   public distance = 0;
   public drawPosition: Phaser.Math.Vector2;
   public endPosition: { x: number, y: number, direction: number };
