@@ -1,5 +1,6 @@
 import { uniqueId } from "lodash";
 import { getPoint } from "../../utils/point";
+import { useDeltatime } from "../services/deltatime.service";
 import { useDistance } from "../services/distance.service";
 import type { Track } from "../tracks/track.model";
 
@@ -23,7 +24,12 @@ export class TrackSegment {
     return !!this.params.arc;
   }
 
+  public get entrySpeed() {
+    return (this.params.radius || Infinity) * this.distanceService.meter * 2 * this.deltaService.elapsed.value;
+  }
+
   private distanceService = useDistance();
+  private deltaService = useDeltatime();
 
   private get directionOffset() {
     return 90 * this.directionModifier;
@@ -71,6 +77,10 @@ export class TrackSegment {
     return this.isCorner ? this.getPositionFromDistanceCorner(distance) : this.getPositionFromDistanceStraight(distance);
   }
 
+  public getSpeedFromDistance(distance: number): number {
+    return this.isCorner ? this.getSpeedFromDistanceCorner(distance) : Infinity;
+  }
+
   private setDistance() {
     this.distance =
       this.isCorner
@@ -86,5 +96,11 @@ export class TrackSegment {
 
   private getPositionFromDistanceStraight(distance: number) {
     return getPoint(this.position, this.direction, distance);
+  }
+
+  private getSpeedFromDistanceCorner(distance: number) {
+    const halfDistance = this.distance * 0.5;
+    const ratio = 0.5 + ((Math.abs(distance - halfDistance) / halfDistance) * 0.5);
+    return this.entrySpeed * ratio;
   }
 }

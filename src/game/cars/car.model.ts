@@ -1,5 +1,4 @@
 import { uuid } from "../../utils/uuid";
-import { useGameFactory } from "../game.factory";
 import { useDeltatime } from "../services/deltatime.service";
 import { useDistance } from "../services/distance.service";
 import { randomRange } from "../../utils/random";
@@ -23,31 +22,32 @@ export class Car {
 
   public trackDistance = 0;
   public pace = 0.7;
+  public speed = 0;
   public targetPace = 0.7;
   public mistakes = 0;
   public crashed = false;
 
   public laps = [] as Lap[];
 
-  public get speed() {
-    // return this.crashed ? 0 : 800 * this.pace;
-    return 600 * this.pace;
-  }
-
   private distance = useDistance();
   private delta = useDeltatime();
   private lapStart = Date.now();
 
+  private get nextSegment() {
+    return this.scene.track.getNextSegment(this.currentSegment);
+  }
+
   constructor(private scene: GameScene) {
     this.object = scene.add.circle(0, 0, this.distance.meter * 4, 0xff0000);
     scene.cameras.main.startFollow(this.object);
+    scene.cameras.main.zoom = 2;
     this.currentSegment = scene.track.segments[0];
   }
 
   public update() {
-    const dis = this.distance.kphToPixelsPerSecond(this.speed) * this.delta.elapsed.value;
-    this.trackDistance += dis;
-    this.currentSegmentDistance += dis;
+    this.updateSpeed();
+    this.trackDistance += this.speed;
+    this.currentSegmentDistance += this.speed;
 
     if (this.currentSegmentDistance > this.currentSegment.distance) {
       this.onNextSegment();
@@ -66,6 +66,25 @@ export class Car {
     this.pace = Math.max(Math.min(randomizedTargetPace, this.pace + amt), 0.6);
   }
 
+  private updateSpeed() {
+    if (this.shouldBrake()) {
+      this.speed -= this.brakes.decelerationRate;
+    } else if (this.currentSegment.isCorner) {
+      this.speed = Math.min(
+        this.currentSegment.getSpeedFromDistance(this.currentSegmentDistance),
+        this.speed + this.engine.accelerationRate
+      );
+    } else {
+      this.speed += this.engine.accelerationRate;
+    }
+  }
+
+  private shouldBrake() {
+    const requiredSpeedReduction = this.speed - this.nextSegment.entrySpeed;
+    const distanceToNextSegment = this.currentSegment.distance - this.currentSegmentDistance;
+    return requiredSpeedReduction / this.brakes.decelerationRate > distanceToNextSegment / this.speed;
+  }
+
   private updatePosition() {
     const newPosition = this.currentSegment.getPositionFromDistance(this.currentSegmentDistance);
     this.object.setPosition(newPosition.x, newPosition.y);
@@ -73,7 +92,7 @@ export class Car {
 
   private onNextSegment() {
     this.currentSegmentDistance -= this.currentSegment.distance;
-    this.currentSegment = this.scene.track.getNextSegment(this.currentSegment);
+    this.currentSegment = this.nextSegment;
 
     if (this.currentSegment.params.start) {
       this.onNextLap();

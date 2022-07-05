@@ -30,7 +30,6 @@ export class GameScene extends Phaser.Scene {
   public create() {
     scene.value = this;
     this.inputManager = useGameInputs(this);
-    this.delta.reset();
 
     this.track = new Track();
     this.cars = [new Car(this)];
@@ -40,9 +39,9 @@ export class GameScene extends Phaser.Scene {
     this.events.emit("setupComplete");
   }
 
-  public update() {
+  public update(time: number, delta: number) {
+    this.delta.update(delta);
     this.inputManager.update();
-    this.delta.update();
     this.updateCars();
     this.publicApi.updateFromGame(this);
   }
