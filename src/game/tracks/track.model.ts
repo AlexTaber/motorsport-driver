@@ -1,20 +1,9 @@
-import { sample } from "lodash";
-import { arrayLast } from "../../state/utils";
-import { randomInt } from "../../utils/random";
 import { useCanvas } from "../canvas/canvas.service";
 import { GameScene } from "../game.scene";
-import { InputNodeType } from "../input-nodes/input-node.model";
-import { useDistance } from "../services/distance.service";
 import { TrackSegment, TrackSegmentParams } from "../track-segments/track-segment.model";
 import { useTrackSpriteGenerator } from "./track-sprite-generator";
 
-interface InputNodeParams {
-  type: InputNodeType;
-  distance: number;
-}
-
 export class Track {
-  private distanceService = useDistance();
   private canvas = useCanvas();
 
   public x = this.canvas.getCenter().x;
@@ -109,12 +98,8 @@ export class Track {
 		},
 	] as TrackSegmentParams[];
 
-  public nodeIndex = 0;
-  public nodes = [] as InputNodeParams[];
-
   constructor() {
     this.generateSegments();
-    this.generateRandomNodes();
 		this.setDistance();
   }
 
@@ -150,15 +135,4 @@ export class Track {
 	private setDistance() {
 		this.distance = this.segments.reduce((d, s) => d + s.distance, 0);
 	}
-
-  private generateRandomNodes() {
-    let dis = this.distanceService.kilometer * 0.3;
-    while(dis < this.distance) {
-      dis += (this.distanceService.meter * 2) * randomInt(20, 150);
-      this.nodes.push({
-        type: sample(["brake", "throttle", "steer"].filter(i => i !== arrayLast(this.nodes)?.type)) as InputNodeType,
-        distance: dis,
-      });
-    }
-  }
 }

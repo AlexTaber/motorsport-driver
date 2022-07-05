@@ -30,7 +30,8 @@ export class Car {
   public laps = [] as Lap[];
 
   public get speed() {
-    return this.crashed ? 0 : 800 * this.pace;
+    // return this.crashed ? 0 : 800 * this.pace;
+    return 600 * this.pace;
   }
 
   private distance = useDistance();
@@ -82,7 +83,7 @@ export class Car {
   private onNextLap() {
     this.addLap();
     this.trackDistance = this.currentSegmentDistance;
-    this.scene.track.nodeIndex = 0;
+    this.scene.events.emit("newLap");
   }
 
   private addLap() {

@@ -1,7 +1,12 @@
 import { useCanvas } from "../canvas/canvas.service";
-import { useGameFactory } from "../game.factory";
+import { InputNodesScene } from "./input-nodes.scene";
 
 export type InputNodeType = "brake" | "throttle" | "gearUp" | "gearDown" | "steer" | "correction";
+
+export interface InputNodeParams {
+  type: InputNodeType;
+  distance: number;
+}
 
 export class InputNode {
   public id = Math.random();
@@ -17,7 +22,6 @@ export class InputNode {
     return 1 - (Math.abs(this.targetTime - this.life) / this.targetTime)
   }
 
-  private scene = useGameFactory().getScene();
   private canvas = useCanvas();
 
   private get life() {
@@ -31,6 +35,7 @@ export class InputNode {
   constructor(
     public type: InputNodeType,
     public targetTime: number,
+    private scene: InputNodesScene
   ) {
     const position = this.getPosition();
     this.object = this.scene.physics.add.sprite(position.x, position.y, "inputNode");
