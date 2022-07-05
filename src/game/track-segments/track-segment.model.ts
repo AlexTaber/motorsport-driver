@@ -1,3 +1,4 @@
+import { uniqueId } from "lodash";
 import { getPoint } from "../../utils/point";
 import { useDistance } from "../services/distance.service";
 import type { Track } from "../tracks/track.model";
@@ -8,16 +9,19 @@ export interface TrackSegmentParams {
   arc?: number;
   radius?: number;
   finish?: boolean;
+  start?: boolean;
 }
 
 export class TrackSegment {
-  public get isCorner() {
-    return !!this.params.arc;
-  }
+  public id = uniqueId();
 
   public distance = 0;
   public drawPosition: Phaser.Math.Vector2;
   public endPosition: { x: number, y: number, direction: number };
+
+  public get isCorner() {
+    return !!this.params.arc;
+  }
 
   private distanceService = useDistance();
 
@@ -51,6 +55,8 @@ export class TrackSegment {
         ),
         direction: this.direction + this.params.arc!,
       };
+    } else if (this.params.finish) {
+      this.endPosition = { x: track.x, y: track.y, direction: track.direction };
     } else {
       this.endPosition = {
         ...getPoint(this.position, this.direction, this.params.length * this.distanceService.meter),
@@ -61,10 +67,22 @@ export class TrackSegment {
     this.setDistance();
   }
 
+  public getPositionFromDistance(distance: number) {
+    return this.isCorner ? this.getPositionFromDistanceCorner(distance) : this.getPositionFromDistanceStraight(distance);
+  }
+
   private setDistance() {
     this.distance =
       this.isCorner
         ? Math.abs(Phaser.Math.DegToRad(this.params.arc!) * this.params.radius! * this.distanceService.meter)
         : Phaser.Math.Distance.BetweenPoints(this.position, this.endPosition);
 	}
+
+  private getPositionFromDistanceCorner(distance: number) {
+    return this.drawPosition;
+  }
+
+  private getPositionFromDistanceStraight(distance: number) {
+    return getPoint(this.position, this.direction, distance);
+  }
 }

@@ -27,13 +27,7 @@ export function useTrackSpriteGenerator(track: Track, scene: GameScene) {
   function drawSegment(graphics: Phaser.GameObjects.Graphics, segment: TrackSegment) {
     graphics.beginPath();
 
-    if (segment.params.finish) {
-      const startX = segment.position.x + textureX - track.x;
-			const startY = segment.position.y + textureY - track.y;
-			const endX = textureX;
-			const endY = textureY;
-			graphics.lineBetween(startX, startY, endX, endY);
-    } else if (segment.isCorner) {
+    if (segment.isCorner) {
       drawCorner(graphics, segment);
     } else {
       const startX = segment.position.x + textureX - track.x;

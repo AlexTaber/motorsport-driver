@@ -36,7 +36,7 @@ export class GameScene extends Phaser.Scene {
     this.delta.reset();
 
     this.track = new Track();
-    this.cars = [new Car()];
+    this.cars = [new Car(this)];
     this.playerCar = this.cars[0];
 
     this.track.setSprite(this);

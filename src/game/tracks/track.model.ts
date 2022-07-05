@@ -1,6 +1,6 @@
 import { sample } from "lodash";
 import { arrayLast } from "../../state/utils";
-import { randomRange, randomInt } from "../../utils/random";
+import { randomInt } from "../../utils/random";
 import { useCanvas } from "../canvas/canvas.service";
 import { GameScene } from "../game.scene";
 import { InputNodeType } from "../input-nodes/input-node.model";
@@ -27,6 +27,7 @@ export class Track {
 		{
 			name: "S1",
 			length: 600,
+			start: true,
 		},
 		{
 			name: "T1",
@@ -120,6 +121,11 @@ export class Track {
     const sprite = useTrackSpriteGenerator(this, scene).generate();
   }
 
+	public getNextSegment(segment: TrackSegment) {
+		const index = this.segments.findIndex(s => s.id === segment.id);
+		return this.segments[(index + 1) % this.segments.length];
+	}
+
   private generateSegments() {
     let position = {
       x: this.x,
@@ -141,7 +147,7 @@ export class Track {
   }
 
   private generateRandomNodes() {
-    this.distance = this.distanceService.kilometer * 0.5;
+    this.distance = this.distanceService.kilometer * 0;
     let dis = this.distanceService.kilometer * 0.1;
     while(dis < this.distance) {
       dis += (this.distanceService.meter * 2) * randomInt(2, 15);
