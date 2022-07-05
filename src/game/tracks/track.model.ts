@@ -115,6 +115,7 @@ export class Track {
   constructor() {
     this.generateSegments();
     this.generateRandomNodes();
+		this.setDistance();
   }
 
   public setSprite(scene: GameScene) {
@@ -146,11 +147,14 @@ export class Track {
     });
   }
 
+	private setDistance() {
+		this.distance = this.segments.reduce((d, s) => d + s.distance, 0);
+	}
+
   private generateRandomNodes() {
-    this.distance = this.distanceService.kilometer * 0;
-    let dis = this.distanceService.kilometer * 0.1;
+    let dis = this.distanceService.kilometer * 0.3;
     while(dis < this.distance) {
-      dis += (this.distanceService.meter * 2) * randomInt(2, 15);
+      dis += (this.distanceService.meter * 2) * randomInt(20, 150);
       this.nodes.push({
         type: sample(["brake", "throttle", "steer"].filter(i => i !== arrayLast(this.nodes)?.type)) as InputNodeType,
         distance: dis,

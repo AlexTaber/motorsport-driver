@@ -79,7 +79,9 @@ export class TrackSegment {
 	}
 
   private getPositionFromDistanceCorner(distance: number) {
-    return this.drawPosition;
+    const segmentCompletePercentage = distance / this.distance;
+    const angle = this.direction - (90 * this.directionModifier) + (this.params.arc! * segmentCompletePercentage);
+    return getPoint(this.drawPosition, angle, this.params.radius!);
   }
 
   private getPositionFromDistanceStraight(distance: number) {

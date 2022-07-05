@@ -30,7 +30,7 @@ export class Car {
   public laps = [] as Lap[];
 
   public get speed() {
-    return this.crashed ? 0 : 500 * this.pace;
+    return this.crashed ? 0 : 800 * this.pace;
   }
 
   private distance = useDistance();
