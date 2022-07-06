@@ -53,6 +53,14 @@ export class Car {
     return this.scene.track.getNextSegment(this.currentSegment);
   }
 
+  private get accelerationRate() {
+    return this.engine.accelerationRate * this.pace;
+  }
+
+  private get decelerationRate() {
+    return this.brakes.decelerationRate * this.pace;
+  }
+
   constructor(private scene: GameScene) {
     this.object = scene.add.circle(0, 0, this.distance.meter * 4, 0xff0000);
     scene.cameras.main.startFollow(this.object);
@@ -61,7 +69,7 @@ export class Car {
   }
 
   public update() {
-    this.inputs = { ...defaultInputs };
+    this.inputs = { ...defaultInputs, brake: this.inputs.brake };
     this.updateSpeed();
     this.trackDistance += this.speed;
     this.currentSegmentDistance += this.speed;
@@ -85,26 +93,32 @@ export class Car {
   }
 
   private updateSpeed() {
-    if (this.shouldBrake()) {
-      this.speed -= this.brakes.decelerationRate;
+    if (this.inputs.brake) {
+      this.speed -= this.decelerationRate;
+    } else if (this.shouldBrake()) {
+      this.speed -= this.decelerationRate;
       this.inputs.brake = true;
-    } else if (this.currentSegment.isCorner) {
-      this.speed = Math.min(
-        this.currentSegment.getSpeedFromDistance(this.currentSegmentDistance),
-        this.speed + this.engine.accelerationRate
-      );
+    } else {
+      this.inputs.brake = false;
 
-      if (this.currentSegmentDistance > this.currentSegment.distance * 0.5) {
+      if (this.currentSegment.isCorner) {
+        this.speed = Math.min(
+          this.currentSegment.getSpeedFromDistance(this.currentSegmentDistance),
+          this.speed + this.accelerationRate,
+        );
+
+        if (this.currentSegmentDistance > this.currentSegment.distance * 0.5) {
+          this.inputs.throttle = true;
+        }
+      } else {
+        this.speed += this.accelerationRate;
         this.inputs.throttle = true;
       }
-    } else {
-      this.speed += this.engine.accelerationRate;
-      this.inputs.throttle = true;
     }
   }
 
   private shouldBrake() {
-    const requiredBrakingDistance = (Math.pow(this.nextSegment.entrySpeed, 2) - Math.pow(this.speed, 2)) / (-this.brakes.decelerationRate * 2);
+    const requiredBrakingDistance = (Math.pow(this.nextSegment.entrySpeed, 2) - Math.pow(this.speed, 2)) / (-this.decelerationRate * 2);
     const distanceToNextSegment = this.currentSegment.distance - this.currentSegmentDistance;
     return requiredBrakingDistance > distanceToNextSegment;
   }
@@ -124,6 +138,7 @@ export class Car {
 
     if (this.currentSegment.isCorner) {
       this.inputs.steering = true;
+      this.inputs.brake = false;
     }
   }
 
