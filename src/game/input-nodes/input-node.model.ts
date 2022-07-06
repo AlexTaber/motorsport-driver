@@ -18,8 +18,8 @@ export class InputNode {
     return this.life > this.maxLife
   }
 
-  public get percentRelativeToTarget() {
-    return 1 - (Math.abs(this.targetTime - this.life) / this.targetTime)
+  public get percentValue() {
+    return 1 - (this.life / this.maxLife);
   }
 
   private canvas = useCanvas();
@@ -28,13 +28,9 @@ export class InputNode {
     return Date.now() - this.created;
   }
 
-  private get maxLife() {
-    return this.targetTime * 2;
-  }
-
   constructor(
     public type: InputNodeType,
-    public targetTime: number,
+    public maxLife: number,
     private scene: InputNodesScene
   ) {
     const position = this.getPosition();
@@ -45,7 +41,7 @@ export class InputNode {
 
   public update() {
     this.setPosition(this.object.body.position.x, this.object.body.position.y - 2);
-    this.object.setScale(Math.max(0, 0.5 * this.percentRelativeToTarget));
+    this.object.setScale(Math.max(0, 0.5 * this.percentValue));
   }
 
   public markForDestruction() {
@@ -56,8 +52,8 @@ export class InputNode {
     this.object.destroy();
   }
 
-  public getPercentRelativeToTargetWithModifier(modifier: number) {
-    return -(modifier * 0.5) + (this.percentRelativeToTarget * modifier);
+  public getModifiedPercentValue(modifier: number) {
+    return -(modifier * 0.5) + (this.percentValue * modifier);
   }
 
   public setPosition(x: number, y: number) {

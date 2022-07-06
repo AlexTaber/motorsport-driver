@@ -98,8 +98,8 @@ export class InputNodesScene extends Phaser.Scene {
   }
 
   private pushNode(type: InputNodeType) {
-    const targetTime = 100 + (1000 * (1 - Math.max(this.playerCar.pace, 0.6)));
-    this.nodes.push(new InputNode(type, targetTime, this));
+    const maxLife = 200 + (1500 * (1 - Math.max(this.playerCar.pace, 0.6)));
+    this.nodes.push(new InputNode(type, maxLife, this));
   }
 
   private cleanInputs() {
@@ -117,13 +117,11 @@ export class InputNodesScene extends Phaser.Scene {
 
     if (node) {
       if (node.type !== "correction") {
-        this.playerCar.incPace(0.02 * node.getPercentRelativeToTargetWithModifier(2));
+        this.playerCar.incPace(0.02 * node.getModifiedPercentValue(2));
       }
       node.markForDestruction();
     } else {
-      if (type !== "correction") {
-        this.onPlayerMistake();
-      }
+      this.playerCar.incPace(-0.02);
     }
   }
 
@@ -131,8 +129,8 @@ export class InputNodesScene extends Phaser.Scene {
     if (!this.nodes.find(n => n.type === "correction")) {
       this.playerCar.mistake();
 
-      const targetTime = randomRange(200, 600);
-      this.nodes.push(new InputNode("correction", targetTime, this));
+      const maxLife = randomRange(400, 1200);
+      this.nodes.push(new InputNode("correction", maxLife, this));
     }
   }
 
