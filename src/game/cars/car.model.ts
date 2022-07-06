@@ -11,6 +11,20 @@ interface Lap {
   time: number;
 }
 
+export interface CarInputState {
+  throttle: boolean;
+  brake: boolean;
+  steering: boolean;
+  correction: boolean;
+}
+
+const defaultInputs: CarInputState = {
+  throttle: false,
+  brake: false,
+  steering: false,
+  correction: false,
+}
+
 export class Car {
   public id = uuid();
   public object: Phaser.GameObjects.Arc;
@@ -26,6 +40,8 @@ export class Car {
   public targetPace = 0.7;
   public mistakes = 0;
   public crashed = false;
+
+  public inputs = { ...defaultInputs };
 
   public laps = [] as Lap[];
 
@@ -45,6 +61,7 @@ export class Car {
   }
 
   public update() {
+    this.inputs = { ...defaultInputs };
     this.updateSpeed();
     this.trackDistance += this.speed;
     this.currentSegmentDistance += this.speed;
@@ -59,6 +76,7 @@ export class Car {
   public mistake() {
     this.mistakes ++;
     this.incPace(-0.1);
+    this.inputs.correction = true;
   }
 
   public incPace(amt: number) {
@@ -69,20 +87,26 @@ export class Car {
   private updateSpeed() {
     if (this.shouldBrake()) {
       this.speed -= this.brakes.decelerationRate;
+      this.inputs.brake = true;
     } else if (this.currentSegment.isCorner) {
       this.speed = Math.min(
         this.currentSegment.getSpeedFromDistance(this.currentSegmentDistance),
         this.speed + this.engine.accelerationRate
       );
+
+      if (this.currentSegmentDistance > this.currentSegment.distance * 0.5) {
+        this.inputs.throttle = true;
+      }
     } else {
       this.speed += this.engine.accelerationRate;
+      this.inputs.throttle = true;
     }
   }
 
   private shouldBrake() {
-    const requiredSpeedReduction = this.speed - this.nextSegment.entrySpeed;
+    const requiredBrakingDistance = (Math.pow(this.nextSegment.entrySpeed, 2) - Math.pow(this.speed, 2)) / (-this.brakes.decelerationRate * 2);
     const distanceToNextSegment = this.currentSegment.distance - this.currentSegmentDistance;
-    return requiredSpeedReduction / this.brakes.decelerationRate > distanceToNextSegment / this.speed;
+    return requiredBrakingDistance > distanceToNextSegment;
   }
 
   private updatePosition() {
@@ -96,6 +120,10 @@ export class Car {
 
     if (this.currentSegment.params.start) {
       this.onNextLap();
+    }
+
+    if (this.currentSegment.isCorner) {
+      this.inputs.steering = true;
     }
   }
 

@@ -3,25 +3,19 @@ import { useDistance } from '../services/distance.service';
 import { GameScene } from '../game.scene';
 import { useGameFactory } from '../game.factory';
 import { InputNode, InputNodeParams, InputNodeType } from './input-node.model';
-import { randomInt, randomRange } from '@/utils/random';
-import { sample } from 'lodash';
-import { arrayLast } from '@/state/utils';
+import { randomRange } from '@/utils/random';
 import { InputNodesInputs, useInputNodesInputs } from './input-nodes.inputs';
+import { CarInputState } from '../cars/car.model';
 
 export class InputNodesScene extends Phaser.Scene {
   public nodes = [] as InputNode[];
 
   private inputManager!: InputNodesInputs;
   private gameScene!: GameScene;
-  private distance = useDistance();
+  private lastInputState!: CarInputState;
 
-  private nodeParamsIndex = 0;
-  private nodeParams = [] as InputNodeParams[];
   private nodesMarkedForDestruction = [] as InputNode[];
-
-  private get track() {
-    return this.gameScene.track;
-  }
+  private initialized = false;
 
   private get playerCar() {
     return this.gameScene.playerCar;
@@ -36,18 +30,17 @@ export class InputNodesScene extends Phaser.Scene {
     this.inputManager = useInputNodesInputs(this);
 
     this.gameScene.events.on("setupComplete", () => {
-      this.generateRandomNodes();
-    });
-
-    this.gameScene.events.on("newLap", () => {
-      this.nodeParamsIndex = 0;
+      this.initialized = true;
+      this.lastInputState = this.gameScene.playerCar.inputs;
     });
   }
 
   public update() {
-    this.inputManager.update();
-    this.updateNodes();
-    this.cleanInputs();
+    if (this.initialized) {
+      this.inputManager.update();
+      this.updateNodes();
+      this.cleanInputs();
+    }
   }
 
   public onBrake() {
@@ -66,26 +59,24 @@ export class InputNodesScene extends Phaser.Scene {
     this.onKeyPress("correction");
   }
 
-  private generateRandomNodes() {
-    let dis = this.distance.kilometer * 0.3;
-    while(dis < this.track.distance) {
-      dis += (this.distance.meter * 20) * sample([1, 2, 2, 2, 2, 4])!;
-      this.nodeParams.push({
-        type: sample(["brake", "throttle", "steer"].filter(i => i !== arrayLast(this.nodeParams)?.type)) as InputNodeType,
-        distance: dis,
-      });
-    }
-  }
-
   private updateNodes() {
-    const currentNode = this.nodeParams[this.nodeParamsIndex];
-
-    if (currentNode && currentNode.distance < this.playerCar.trackDistance) {
-      const targetTime = 100 + (1000 * (1 - Math.max(this.playerCar.pace, 0.6)));
-
-      this.nodes.push(new InputNode(currentNode.type, targetTime, this));
-      this.nodeParamsIndex ++;
+    if (this.playerCar.inputs.throttle && !this.lastInputState.throttle) {
+      this.pushNode("throttle");
     }
+
+    if (this.playerCar.inputs.brake && !this.lastInputState.brake) {
+      this.pushNode("brake");
+    }
+
+    if (this.playerCar.inputs.steering && !this.lastInputState.steering) {
+      this.pushNode("steer");
+    }
+
+    if (this.playerCar.inputs.correction && !this.lastInputState.correction) {
+      this.pushNode("correction");
+    }
+
+    this.lastInputState = this.playerCar.inputs;
 
     this.nodes.forEach(n => {
       n.update()
@@ -104,6 +95,11 @@ export class InputNodesScene extends Phaser.Scene {
         this.nodesMarkedForDestruction.push(n);
       }
     });
+  }
+
+  private pushNode(type: InputNodeType) {
+    const targetTime = 100 + (1000 * (1 - Math.max(this.playerCar.pace, 0.6)));
+    this.nodes.push(new InputNode(type, targetTime, this));
   }
 
   private cleanInputs() {
