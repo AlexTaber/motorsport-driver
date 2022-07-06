@@ -117,7 +117,7 @@ export class InputNodesScene extends Phaser.Scene {
 
     if (node) {
       if (node.type !== "correction") {
-        this.playerCar.incPace(0.02 * node.getModifiedPercentValue(2));
+        this.playerCar.incPace(0.06 * node.getModifiedPercentValue(2));
       }
       node.markForDestruction();
     } else {
