@@ -30,16 +30,17 @@ export class GameScene extends Phaser.Scene {
   public create() {
     scene.value = this;
     this.inputManager = useGameInputs(this);
-
     this.track = new Track();
-    this.cars = [new Car(this)];
+    this.cars = [new Car(this, true), new Car(this)];
     this.playerCar = this.cars[0];
+    this.cameras.main.startFollow(this.playerCar.object);
 
     this.track.setSprite(this);
     this.events.emit("setupComplete");
   }
 
   public update(time: number, delta: number) {
+    this.cars.sort((c1, c2) => c1.trackDistance < c2.trackDistance ? 1 : -1);
     this.delta.update(delta);
     this.inputManager.update();
     this.updateCars();

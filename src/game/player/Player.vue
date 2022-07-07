@@ -12,6 +12,10 @@
       Target Pace: {{ playerCar?.targetPace }}
     </h4>
 
+    <h4 v-if="playerCar?.battle">
+      Battle Progress: {{ playerCar?.battle }}
+    </h4>
+
     <h1 v-if="playerCar?.crashed">
       CRASHED
     </h1>

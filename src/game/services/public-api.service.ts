@@ -1,6 +1,7 @@
 import { GameScene } from "../game.scene";
 import { useStore } from "../../state/store";
 import { arrayLast } from "../../state/utils";
+import { CarBattle } from "../cars/car-battle.model";
 
 export interface PublicCar {
   id: string;
@@ -10,6 +11,7 @@ export interface PublicCar {
   crashed: boolean;
   lastLap?: number;
   fastestLap?: number;
+  battle?: number;
 }
 
 const store = useStore("PublicGameState", {
@@ -35,6 +37,7 @@ export const usePublicApi = () => {
       lastLap: arrayLast(c.laps)?.time,
       fastestLap: [ ...c.laps ].sort((l1, l2) => l1.time > l2.time ? 1 : -1)[0]?.time,
       targetPace: c.targetPace,
+      battle: c.battle?.progress,
     }));
   }
 

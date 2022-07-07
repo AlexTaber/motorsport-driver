@@ -6,6 +6,8 @@ import { Engine } from "../car-parts/engines/engine.model";
 import { Brake } from "../car-parts/brakes/brake.model";
 import { GameScene } from "../game.scene";
 import { TrackSegment } from "../track-segments/track-segment.model";
+import { CarAI } from "./car.ai";
+import { CarBattle } from "./car-battle.model";
 
 interface Lap {
   time: number;
@@ -13,23 +15,25 @@ interface Lap {
 
 export interface CarInputState {
   throttle: boolean;
-  brake: boolean;
+  brake?: number;
   steering: boolean;
   correction: boolean;
 }
 
 const defaultInputs: CarInputState = {
   throttle: false,
-  brake: false,
+  brake: undefined,
   steering: false,
   correction: false,
 }
 
 export class Car {
   public id = uuid();
+  public ai?: CarAI;
   public object: Phaser.GameObjects.Arc;
   public currentSegment: TrackSegment;
   public currentSegmentDistance = 0;
+  public battle?: CarBattle;
 
   public engine = new Engine(0.7);
   public brakes = new Brake(0.7);
@@ -37,7 +41,7 @@ export class Car {
   public trackDistance = 0;
   public pace = 0.7;
   public speed = 0;
-  public targetPace = 0.7;
+  public targetPace = 1;
   public mistakes = 0;
   public crashed = false;
 
@@ -45,9 +49,19 @@ export class Car {
 
   public laps = [] as Lap[];
 
-  private distance = useDistance();
+  private distanceService = useDistance();
   private delta = useDeltatime();
   private lapStart = Date.now();
+
+  private get carAhead() {
+    const index = this.scene.cars.findIndex(c => c.id === this.id);
+    return this.scene.cars[(index + 1) % this.scene.cars.length];
+  }
+
+  private get distanceToCarAhead() {
+    const distanceDiff = this.carAhead.trackDistance - this.trackDistance;
+    return distanceDiff > 0 ? distanceDiff : this.scene.track.distance - distanceDiff;
+  }
 
   private get nextSegment() {
     return this.scene.track.getNextSegment(this.currentSegment);
@@ -61,11 +75,14 @@ export class Car {
     return this.brakes.decelerationRate * this.pace;
   }
 
-  constructor(private scene: GameScene) {
-    this.object = scene.add.circle(0, 0, this.distance.meter * 4, 0xff0000);
-    scene.cameras.main.startFollow(this.object);
+  constructor(private scene: GameScene, isPlayer = false) {
+    this.object = scene.add.circle(0, 0, this.distanceService.meter * 4, 0xff0000);
     scene.cameras.main.zoom = 2;
     this.currentSegment = scene.track.segments[0];
+
+    if (!isPlayer) {
+      this.ai = new CarAI(this);
+    }
   }
 
   public update() {
@@ -77,6 +94,36 @@ export class Car {
     if (this.currentSegmentDistance > this.currentSegment.distance) {
       this.onNextSegment();
     }
+
+    const battleDistance = this.distanceService.meter * 5;
+    if (!this.battle && this.distanceToCarAhead < battleDistance && this.pace > this.carAhead.pace) {
+      this.battle = { defender: this.carAhead, progress: 0 };
+    } else if (this.battle) {
+      let progress = this.pace - this.battle.defender.pace;
+      if (this.currentSegment.isCorner) {
+        progress = Math.min(progress, progress * 0.5);
+      }
+
+      this.battle.progress += progress;
+
+      if (this.battle.progress > 5) {
+        this.trackDistance += battleDistance;
+        this.currentSegmentDistance += battleDistance;
+
+        const newTrackDistance = this.trackDistance - battleDistance;
+        const newTrackDistanceDiff = this.battle.defender.trackDistance - newTrackDistance;
+        this.battle.defender.trackDistance = newTrackDistance;
+        this.battle.defender.currentSegmentDistance -= newTrackDistanceDiff;
+        this.battle.defender.pace -= 0.1;
+        this.battle = undefined;
+      } else if (this.battle.progress < -5) {
+        this.speed = Math.min(this.speed, this.battle.defender.speed - (this.accelerationRate * 5))
+        this.pace = Math.min(this.pace, this.battle.defender.pace - 0.1);
+        this.battle = undefined;
+      }
+    }
+
+    this.ai?.update();
 
     this.updatePosition();
   }
@@ -94,16 +141,16 @@ export class Car {
 
   private updateSpeed() {
     if (this.inputs.brake) {
-      this.speed -= this.decelerationRate;
+      this.speed -= this.inputs.brake;
     } else if (this.shouldBrake()) {
-      this.speed -= this.decelerationRate;
-      this.inputs.brake = true;
+      this.inputs.brake = this.decelerationRate;
+      this.speed -= this.inputs.brake;
     } else {
-      this.inputs.brake = false;
+      this.inputs.brake = undefined;
 
       if (this.currentSegment.isCorner) {
         this.speed = Math.min(
-          this.currentSegment.getSpeedFromDistance(this.currentSegmentDistance),
+          this.currentSegment.getSpeedFromDistance(this.currentSegmentDistance) * this.pace,
           this.speed + this.accelerationRate,
         );
 
@@ -114,6 +161,10 @@ export class Car {
         this.speed += this.accelerationRate;
         this.inputs.throttle = true;
       }
+    }
+
+    if (this.battle) {
+      this.speed = this.battle.defender.speed;
     }
   }
 
@@ -138,7 +189,7 @@ export class Car {
 
     if (this.currentSegment.isCorner) {
       this.inputs.steering = true;
-      this.inputs.brake = false;
+      this.inputs.brake = undefined;
     }
   }
 
