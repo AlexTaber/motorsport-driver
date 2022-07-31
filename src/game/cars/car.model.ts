@@ -39,7 +39,7 @@ export class Car {
   public brakes = new Brake(0.7);
 
   public trackDistance = 0;
-  public pace = 0.7;
+  public pace = 0.8;
   public speed = 0;
   public targetPace = 1;
   public mistakes = 0;
@@ -77,11 +77,13 @@ export class Car {
 
   constructor(private scene: GameScene, isPlayer = false) {
     this.object = scene.add.circle(0, 0, this.distanceService.meter * 4, 0xff0000);
-    scene.cameras.main.zoom = 2;
+    scene.cameras.main.zoom = 3;
     this.currentSegment = scene.track.segments[0];
 
     if (!isPlayer) {
-      this.ai = new CarAI(this);
+      this.ai = new CarAI(this, this.scene);
+    } else {
+      this.scene.playerCar = this;
     }
   }
 
@@ -95,33 +97,7 @@ export class Car {
       this.onNextSegment();
     }
 
-    const battleDistance = this.distanceService.meter * 5;
-    if (!this.battle && this.distanceToCarAhead < battleDistance && this.pace > this.carAhead.pace) {
-      this.battle = { defender: this.carAhead, progress: 0 };
-    } else if (this.battle) {
-      let progress = this.pace - this.battle.defender.pace;
-      if (this.currentSegment.isCorner) {
-        progress = Math.min(progress, progress * 0.5);
-      }
-
-      this.battle.progress += progress;
-
-      if (this.battle.progress > 5) {
-        this.trackDistance += battleDistance;
-        this.currentSegmentDistance += battleDistance;
-
-        const newTrackDistance = this.trackDistance - battleDistance;
-        const newTrackDistanceDiff = this.battle.defender.trackDistance - newTrackDistance;
-        this.battle.defender.trackDistance = newTrackDistance;
-        this.battle.defender.currentSegmentDistance -= newTrackDistanceDiff;
-        this.battle.defender.pace -= 0.1;
-        this.battle = undefined;
-      } else if (this.battle.progress < -5) {
-        this.speed = Math.min(this.speed, this.battle.defender.speed - (this.accelerationRate * 5))
-        this.pace = Math.min(this.pace, this.battle.defender.pace - 0.1);
-        this.battle = undefined;
-      }
-    }
+    this.updateBattle();
 
     this.ai?.update();
 
@@ -205,5 +181,38 @@ export class Car {
     const interpolatedTime = (1 - interpolatedTimeRatio) * this.delta.elapsed.value;
     this.laps.push({ time: now - this.lapStart + interpolatedTime });
     this.lapStart = Date.now() - (this.delta.elapsed.value * interpolatedTimeRatio);
+  }
+
+  private updateBattle() {
+    if (!this.battle && this.distanceToCarAhead < CarBattle.distance && this.pace > this.carAhead.pace) {
+      this.battle = new CarBattle(this, this.carAhead);
+    }
+
+    this.battle?.update();
+
+    if (this.battle?.outcome === "success") {
+      this.onBattleSuccess();
+    } else if (this.battle?.outcome === "failed") {
+      this.onBattleFailed();
+    }
+  }
+
+  private onBattleSuccess() {
+    this.trackDistance += CarBattle.distance;
+    this.currentSegmentDistance += CarBattle.distance;
+
+    const newTrackDistance = this.trackDistance - CarBattle.distance;
+    const newTrackDistanceDiff = this.battle!.defender.trackDistance - newTrackDistance;
+
+    this.battle!.defender.trackDistance = newTrackDistance;
+    this.battle!.defender.currentSegmentDistance -= newTrackDistanceDiff;
+    this.battle!.defender.incPace(-0.05);
+    this.battle = undefined;
+  }
+
+  private onBattleFailed() {
+    this.speed = Math.min(this.speed, this.battle!.defender.speed - (this.accelerationRate * 5))
+    this.pace = Math.min(this.pace, this.battle!.defender.pace - 0.1);
+    this.battle = undefined;
   }
 }
